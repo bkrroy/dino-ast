@@ -10,7 +10,7 @@
 ### 1. Clone & Start
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/bkrroy/dino-ast.git
 cd Dino-ast
 
 # Build and start containers (PostgreSQL + Django)
