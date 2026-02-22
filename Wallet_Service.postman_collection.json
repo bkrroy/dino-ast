@@ -1,0 +1,349 @@
+{
+	"info": {
+		"name": "Wallet Service API",
+		"description": "Complete API collection for the Wallet Service — a loyalty rewards backend with double-entry ledger, idempotent transactions, and deadlock-safe concurrency.\n\n**Setup:**\n1. Run `bash run.sh` to start the Docker containers\n2. Run `bash seed_data.sh` to populate test data\n3. Hit \"List Accounts\" to get real account UUIDs\n4. Set the `account_id` collection variable with a USER account UUID",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "account_id",
+			"value": "<PASTE_USER_ACCOUNT_UUID_HERE>",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Asset Types",
+			"item": [
+				{
+					"name": "List Asset Types",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/asset-types/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "asset-types", ""]
+						},
+						"description": "Returns all defined asset types (e.g. Gold Coins, Diamonds, Loyalty Points)."
+					}
+				}
+			]
+		},
+		{
+			"name": "Accounts",
+			"item": [
+				{
+					"name": "List All Accounts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/accounts/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "accounts", ""]
+						},
+						"description": "Returns all accounts (both USER and SYSTEM). Use this to find account UUIDs."
+					}
+				},
+				{
+					"name": "List Accounts — Filter by Type",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/accounts/?account_type=USER",
+							"host": ["{{base_url}}"],
+							"path": ["api", "accounts", ""],
+							"query": [
+								{
+									"key": "account_type",
+									"value": "USER",
+									"description": "Filter by account type: USER or SYSTEM"
+								}
+							]
+						},
+						"description": "Filter accounts by type. Use `USER` to see only user wallets, `SYSTEM` for treasury accounts."
+					}
+				},
+				{
+					"name": "List Accounts — Filter by User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/accounts/?user=1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "accounts", ""],
+							"query": [
+								{
+									"key": "user",
+									"value": "1",
+									"description": "Filter by Django User ID to see all wallets belonging to a specific user"
+								}
+							]
+						},
+						"description": "Get all wallet accounts for a specific Django user by their user ID."
+					}
+				},
+				{
+					"name": "Account Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/accounts/{{account_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "accounts", "{{account_id}}", ""]
+						},
+						"description": "Get full details of a specific account including user info, asset type, and balance."
+					}
+				},
+				{
+					"name": "Account Balance",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/accounts/{{account_id}}/balance/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "accounts", "{{account_id}}", "balance", ""]
+						},
+						"description": "Quick balance check — returns only the account ID, owner name, asset type, and current balance."
+					}
+				}
+			]
+		},
+		{
+			"name": "Transactions",
+			"item": [
+				{
+					"name": "List Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/transactions/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "transactions", ""]
+						},
+						"description": "List all transactions with their ledger entries. Supports filtering by tx_type, status, and account."
+					}
+				},
+				{
+					"name": "List Transactions — Filter by Type",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/transactions/?tx_type=TOPUP",
+							"host": ["{{base_url}}"],
+							"path": ["api", "transactions", ""],
+							"query": [
+								{
+									"key": "tx_type",
+									"value": "TOPUP",
+									"description": "Filter by type: TOPUP, BONUS, or SPEND"
+								}
+							]
+						},
+						"description": "Filter transactions by type: TOPUP, BONUS, or SPEND."
+					}
+				},
+				{
+					"name": "List Transactions — Filter by Account",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/transactions/?account={{account_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "transactions", ""],
+							"query": [
+								{
+									"key": "account",
+									"value": "{{account_id}}",
+									"description": "Filter by account UUID"
+								}
+							]
+						},
+						"description": "Get all transactions for a specific account."
+					}
+				},
+				{
+					"name": "Top-up (Purchase Credits)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_id\": \"{{account_id}}\",\n    \"amount\": \"100.00\",\n    \"idempotency_key\": \"topup-unique-key-001\",\n    \"description\": \"Purchase of 100 credits\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/transactions/topup/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "transactions", "topup", ""]
+						},
+						"description": "Credit a user's wallet (payment assumed complete). Debits Treasury → Credits User.\n\n**Idempotency:** Sending the same `idempotency_key` twice returns the original transaction without creating a duplicate."
+					}
+				},
+				{
+					"name": "Bonus (Free Credits)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_id\": \"{{account_id}}\",\n    \"amount\": \"50.00\",\n    \"idempotency_key\": \"bonus-unique-key-001\",\n    \"description\": \"Referral bonus\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/transactions/bonus/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "transactions", "bonus", ""]
+						},
+						"description": "System issues free credits to a user (e.g. referral bonus, welcome reward). Debits Treasury → Credits User."
+					}
+				},
+				{
+					"name": "Spend (Use Credits)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_id\": \"{{account_id}}\",\n    \"amount\": \"30.00\",\n    \"idempotency_key\": \"spend-unique-key-001\",\n    \"description\": \"In-app item purchase\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/transactions/spend/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "transactions", "spend", ""]
+						},
+						"description": "User spends credits to buy a service. Debits User → Credits Treasury.\n\n**Returns 400** if the user has insufficient balance."
+					}
+				},
+				{
+					"name": "Spend — Insufficient Balance (Error Case)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_id\": \"{{account_id}}\",\n    \"amount\": \"999999.00\",\n    \"idempotency_key\": \"spend-error-test-001\",\n    \"description\": \"This should fail\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/transactions/spend/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "transactions", "spend", ""]
+						},
+						"description": "Test case: Attempting to spend more than the available balance. Should return HTTP 400 with an error message."
+					}
+				},
+				{
+					"name": "Top-up — Idempotency Test (Duplicate)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_id\": \"{{account_id}}\",\n    \"amount\": \"100.00\",\n    \"idempotency_key\": \"topup-unique-key-001\",\n    \"description\": \"Duplicate — should return same transaction\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/transactions/topup/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "transactions", "topup", ""]
+						},
+						"description": "Test idempotency: Uses the SAME `idempotency_key` as the first Top-up request. Should return the original transaction without modifying the balance."
+					}
+				}
+			]
+		},
+		{
+			"name": "Ledger",
+			"item": [
+				{
+					"name": "List Ledger Entries",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/ledger-entries/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "ledger-entries", ""]
+						},
+						"description": "Returns all double-entry ledger records. Each transaction creates two entries: one DEBIT and one CREDIT."
+					}
+				},
+				{
+					"name": "Ledger Entries — Filter by Account",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/ledger-entries/?account={{account_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "ledger-entries", ""],
+							"query": [
+								{
+									"key": "account",
+									"value": "{{account_id}}",
+									"description": "Filter ledger entries by account UUID"
+								}
+							]
+						},
+						"description": "Get all ledger entries for a specific account to see its full debit/credit history."
+					}
+				},
+				{
+					"name": "Ledger Entries — Filter by Type",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/ledger-entries/?entry_type=CREDIT",
+							"host": ["{{base_url}}"],
+							"path": ["api", "ledger-entries", ""],
+							"query": [
+								{
+									"key": "entry_type",
+									"value": "CREDIT",
+									"description": "Filter by entry type: DEBIT or CREDIT"
+								}
+							]
+						},
+						"description": "Filter ledger entries by type: DEBIT or CREDIT."
+					}
+				}
+			]
+		}
+	]
+}

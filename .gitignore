@@ -1,0 +1,11 @@
+*.pyc
+__pycache__
+*.pyo
+.env
+db.sqlite3
+staticfiles/
+postgres_data/
+.DS_Store
+*.egg-info
+dist/
+build/
